@@ -2,12 +2,13 @@ from django.db import models
 from django.contrib.auth import get_user_model
 
 from .constants import LENGTH_NAME_OBJ
-from .validators import validate_name, validate_number
+from .validators import validate_name, validate_number, validate_date_time_start, validate_url
+
 
 User = get_user_model()
 
 
-class EducationCourse(models.Model):
+class Course(models.Model):
     """Модель продукта"""
 
     author = models.ForeignKey(
@@ -24,6 +25,7 @@ class EducationCourse(models.Model):
     )
     date_time_start = models.DateTimeField(
         verbose_name='Дата начала',
+        validators=(validate_date_time_start,),
     )
     cost = models.PositiveSmallIntegerField(
         'Стоимость курса',
@@ -42,22 +44,32 @@ class EducationCourse(models.Model):
     )
 
     class Meta:
-        verbose_name_plural = 'Product'
+        verbose_name_plural = 'Courses'
+        constraints = [
+            models.UniqueConstraint(
+                fields=['author', 'name'], name='unique_author_course'
+            ),
+            models.CheckConstraint(
+                check=models.Q(min_group_people__lte=models.F('max_group_people')),
+                name='Минимальное количество участников не должно быть больше максимального',
+            ),
+        ]
 
     def __str__(self):
         return self.name
 
 
-class Pass(models.Model):
+class PassAccess(models.Model):
     """Модель связи студента и курса"""
 
-    student = models.ForeignKey(User, on_delete=models.PROTECT, related_name='course')
+    student = models.ForeignKey(User, on_delete=models.CASCADE, related_name='pass_access')
     course = models.ForeignKey(
-        EducationCourse, on_delete=models.CASCADE, related_name='student'
+        Course, on_delete=models.CASCADE, related_name='pass_access'
     )
+    is_valid = models.BooleanField('Выдан/Отнят доступ к курсу', default=False)
 
     class Meta:
-        verbose_name_plural = 'Pass'
+        verbose_name_plural = 'PassAccess'
         constraints = [
             models.UniqueConstraint(
                 fields=['student', 'course'],
@@ -65,12 +77,15 @@ class Pass(models.Model):
             )
         ]
 
+    def __str__(self):
+        return f'{self.student.username}'
+
 
 class Lesson(models.Model):
     """Модель урока"""
 
     course = models.ForeignKey(
-        EducationCourse, on_delete=models.CASCADE, related_name='lesson'
+        Course, on_delete=models.CASCADE, related_name='lesson'
     )
     name = models.CharField(
         'Название урока',
@@ -82,10 +97,17 @@ class Lesson(models.Model):
     link_to_video = models.URLField(
         'Cсылка на видео урок',
         help_text='Укажите ссылку на видео',
+        validators=(validate_url,),
         max_length=LENGTH_NAME_OBJ,
         unique=True,
     )
 
+    class Meta:
+        verbose_name_plural = 'Lessons'
+        
+    def __str__(self):
+        return f'Курс: {self.course}, Урок: {self.name}'
+    
 
 class Group(models.Model):
     """Модель группы"""
@@ -95,15 +117,28 @@ class Group(models.Model):
         through='GroupStudents',
     )
     course = models.ForeignKey(
-        EducationCourse, on_delete=models.CASCADE, related_name='group'
+        Course, on_delete=models.CASCADE, related_name='group'
     )
     name = models.CharField(
         'Название группы',
         help_text='Укажите название группы',
         max_length=LENGTH_NAME_OBJ,
+        unique=True,
     )
+
+    class Meta:
+        verbose_name_plural = 'Groups'
 
 
 class GroupStudents(models.Model):
     group = models.ForeignKey(Group, on_delete=models.CASCADE)
     student = models.ForeignKey(User, on_delete=models.CASCADE)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['student', 'group'],
+                name='unique_student_group',
+            )
+        ]
+    
