@@ -18,6 +18,7 @@ class AdminLesson(admin.ModelAdmin):
 class AdminGroup(admin.ModelAdmin):
     pass
 
+
 admin.site.register(Course, AdminCourse)
 admin.site.register(PassAccess, AdminPassAccess)
 admin.site.register(Lesson, AdminLesson)
