@@ -2,7 +2,7 @@ from django.urls import path, include, re_path
 from rest_framework.routers import DefaultRouter
 from djoser import views
 
-from .views import CourseViewSet, GroupViewSet
+from .views import CourseViewSet
 
 
 router = DefaultRouter()

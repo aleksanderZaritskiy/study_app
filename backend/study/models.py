@@ -109,6 +109,15 @@ class Lesson(models.Model):
         return f'Курс: {self.course}, Урок: {self.name}'
     
 
+class GroupManager(models.Manager):
+
+    def create_groups_student_through(self, student):
+        GroupStudents.objects.create(group=self, student=student)
+    
+    # def delete_groups_student_through(self, course):
+    #     GroupStudents.objects.filter(group__course=course).delete()
+
+
 class Group(models.Model):
     """Модель группы"""
 
@@ -125,6 +134,7 @@ class Group(models.Model):
         max_length=LENGTH_NAME_OBJ,
         unique=True,
     )
+    objects = GroupManager()
 
     class Meta:
         verbose_name_plural = 'Groups'

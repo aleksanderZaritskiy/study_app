@@ -1,6 +1,6 @@
 from django.utils import timezone
 from django.shortcuts import get_object_or_404
-from django.db.models import Count, Prefetch, Exists, OuterRef, Subquery, Q
+from django.db.models import Count, Prefetch, Exists, OuterRef, Subquery, Q, Avg
 from rest_framework import viewsets, permissions, status
 from rest_framework.mixins import CreateModelMixin, ListModelMixin, RetrieveModelMixin
 from rest_framework.response import Response
@@ -11,8 +11,6 @@ from study.models import Course, PassAccess, Lesson, Group, GroupStudents, User
 from .serializers import (
     CourseSerializer,
     LessonSerializer,
-    PassSerializer,
-    GroupSerializer,
 )
 
 
@@ -29,11 +27,10 @@ class CourseViewSet(ListModelMixin, viewsets.GenericViewSet):
                 PassAccess.objects.filter(course=OuterRef('pk'), student=user, is_valid=True)
             )
         )
-        #subquery_students_count = PassAccess.objects.filter(course=OuterRef('pk'), is_valid=True).values('student').count()
         queryset = queryset.annotate(
             lessons_count=Count('lesson'),
-            students_count=Count('pass_access', filter=Q(pass_access__is_valid=True)
-    ),
+            students_count=Count('pass_access', filter=Q(pass_access__is_valid=True)),
+
         )
         return queryset.prefetch_related(author_prefetch)
 
@@ -53,9 +50,3 @@ class CourseViewSet(ListModelMixin, viewsets.GenericViewSet):
         return Response({'response': 'Не найдено'}, status=status.HTTP_404_NOT_FOUND)
 
 
-
-class GroupViewSet(ListModelMixin, RetrieveModelMixin, viewsets.GenericViewSet):
-    """Group view"""
-
-    queryset = Group.objects.all()
-    serializer_class = GroupSerializer
