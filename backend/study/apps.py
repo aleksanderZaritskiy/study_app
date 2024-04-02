@@ -6,5 +6,4 @@ class StudyConfig(AppConfig):
     name = "study"
 
     def ready(self):
-        # Импортируйте модуль с сигналами здесь
         import study.signals

@@ -1,6 +1,7 @@
 import datetime as dt
 
 from rest_framework import serializers
+from django.db.models import Avg, F, Q
 from djoser.serializers import UserSerializer
 
 from study.models import Course, PassAccess, Lesson, Group, User
@@ -10,8 +11,8 @@ class CourseSerializer(serializers.ModelSerializer):
     author_name = serializers.SerializerMethodField()
     lessons_count = serializers.SerializerMethodField()
     students_count = serializers.SerializerMethodField()
-    # avg_puck_groups = serializers.SerializerMethodField()
-    # course_purchase = serializers.SerializerMethodField()
+    avg_groups = serializers.SerializerMethodField()
+    course_purchase = serializers.SerializerMethodField()
 
     class Meta:
         model = Course
@@ -24,8 +25,8 @@ class CourseSerializer(serializers.ModelSerializer):
             'max_group_people',
             'lessons_count',
             'students_count',
-            #'avg_puck_groups',
-            #'course_purchase',
+            'avg_groups',
+            'course_purchase',
         )
 
     def get_author_name(self, obj):
@@ -36,6 +37,21 @@ class CourseSerializer(serializers.ModelSerializer):
 
     def get_students_count(self, obj):
         return obj.students_count
+    
+    def get_avg_groups(self, obj):
+        all_groups = Group.objects.filter(course=obj).count()
+        if all_groups and obj.students_count:
+            return round(
+                (all_groups * obj.students_count / all_groups) / obj.max_group_people * 100, 2
+            )
+        return 0
+    
+    def get_course_purchase(self, obj):
+        all_user = User.objects.all().count()
+        if obj.students_count:
+            return round(obj.students_count / all_user * 100, 2)
+        return 0
+
 
 class LessonSerializer(serializers.ModelSerializer):
 

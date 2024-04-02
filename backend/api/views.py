@@ -26,13 +26,13 @@ class CourseViewSet(ListModelMixin, viewsets.GenericViewSet):
             ~Exists(
                 PassAccess.objects.filter(course=OuterRef('pk'), student=user, is_valid=True)
             )
-        )
+        ).prefetch_related(author_prefetch)
         queryset = queryset.annotate(
-            lessons_count=Count('lesson'),
+            lessons_count=Count('lesson', distinct=True),
             students_count=Count('pass_access', filter=Q(pass_access__is_valid=True)),
 
         )
-        return queryset.prefetch_related(author_prefetch)
+        return queryset
 
     @action(
         methods=['GET'],

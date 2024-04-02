@@ -109,15 +109,6 @@ class Lesson(models.Model):
         return f'Курс: {self.course}, Урок: {self.name}'
     
 
-class GroupManager(models.Manager):
-
-    def create_groups_student_through(self, student):
-        GroupStudents.objects.create(group=self, student=student)
-    
-    # def delete_groups_student_through(self, course):
-    #     GroupStudents.objects.filter(group__course=course).delete()
-
-
 class Group(models.Model):
     """Модель группы"""
 
@@ -134,15 +125,27 @@ class Group(models.Model):
         max_length=LENGTH_NAME_OBJ,
         unique=True,
     )
-    objects = GroupManager()
 
     class Meta:
         verbose_name_plural = 'Groups'
 
+    def __str__(self):
+        return f'{self.name}'
 
+
+class GroupStudentsManager(models.Manager):
+
+    def create_group_student(self, group, student):
+        GroupStudents.objects.create(group=group, student=student)
+
+    def del_groups_related_course(self, course):
+        GroupStudents.objects.filter(group__course=course).delete()
+    
+        
 class GroupStudents(models.Model):
     group = models.ForeignKey(Group, on_delete=models.CASCADE)
     student = models.ForeignKey(User, on_delete=models.CASCADE)
+    objects = GroupStudentsManager()
 
     class Meta:
         constraints = [
@@ -152,3 +155,4 @@ class GroupStudents(models.Model):
             )
         ]
     
+
