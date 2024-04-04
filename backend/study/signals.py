@@ -1,10 +1,11 @@
 import logging
 
+from django.core.cache import cache
 from django.db.models import Count
-from django.db.models.signals import post_save
+from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
 
-from study.models import PassAccess, Group
+from study.models import PassAccess, Group, Lesson
 from services.groups_rebalance import GroupRebalance
 
 
@@ -17,7 +18,12 @@ def get_groups(course):
 
 @receiver(post_save, sender=PassAccess)
 def create_group(sender, instance, created, **kwargs):
-    """ ..."""
+    """ 
+    При получении доступа к курсу, студент должен быть распределен в группу.
+    Если курс ещё не начался. При каждом новом допуске группы должны быть ребалансированы n +-1.
+    Ребалансировка групп и побочный функционал реализованы в интерфейсе GroupRebalance в services.groups_rebalance
+    """
+
     logger.info('Запуск сигнала')
 
     student = instance.student
@@ -44,4 +50,14 @@ def create_group(sender, instance, created, **kwargs):
             group_rebalance.groups = get_groups(course)
             group_rebalance.rebalance()
             logger.info('Группы ребалансированы')
+            
+            cache.delete(f'{student}_course_{course.id}')
+            logger.info(f'Кеш {student} очищен')
         
+
+@receiver(post_delete, sender=Lesson)
+@receiver(post_save, sender=Lesson)
+def clear_cache_lessons(sender, instance, **kwargs):
+    course_id = instance.course.id
+    cache.delete(f'lessons_course_{course_id}')
+    logger.info(f'Произошли изменения над объектом Lesson, курса {course_id}. Кеш очищен')

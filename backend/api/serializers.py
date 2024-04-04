@@ -1,10 +1,7 @@
-import datetime as dt
-
 from rest_framework import serializers
-from django.db.models import Avg, F, Q
 from djoser.serializers import UserSerializer
 
-from study.models import Course, PassAccess, Lesson, Group, User
+from study.models import Course, Lesson, Group, User
 
 
 class CourseSerializer(serializers.ModelSerializer):
