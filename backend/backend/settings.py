@@ -151,7 +151,7 @@ LOGGING = {
         'django.db.backends': {
             'level': 'INFO',
         },
-    }
+    },
 }
 
 CACHES = {

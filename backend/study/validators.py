@@ -22,6 +22,4 @@ validate_url = URLValidator(
 
 def validate_date_time_start(value):
     if value <= timezone.now():
-        raise ValidationError(
-            f'{value} должно быть позже текущего времени.'
-        )
+        raise ValidationError(f'{value} должно быть позже текущего времени.')

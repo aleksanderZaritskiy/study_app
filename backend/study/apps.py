@@ -6,4 +6,4 @@ class StudyConfig(AppConfig):
     name = "study"
 
     def ready(self):
-        import study.signals # noqa
+        import study.signals  # noqa

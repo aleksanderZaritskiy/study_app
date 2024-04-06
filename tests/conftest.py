@@ -1,13 +1,15 @@
+import logging
 from datetime import timedelta
 
 import pytest
-from django.test import Client
 from django.utils import timezone
+from django.core.cache import cache
 from rest_framework.test import APIClient
 from rest_framework.authtoken.models import Token
 from django.urls import reverse
 
-from study.models import Course, PassAccess
+from study.models import Course, PassAccess, Lesson
+
 
 @pytest.fixture
 def user(django_user_model):
@@ -16,10 +18,12 @@ def user(django_user_model):
         password='test_password22',
     )
 
+
 @pytest.fixture
 def token_user(user):
     token, created = Token.objects.get_or_create(user=user)
     return token.key
+
 
 @pytest.fixture
 def user_client(token_user):
@@ -29,6 +33,7 @@ def user_client(token_user):
     )
     return client
 
+
 @pytest.fixture
 def author(django_user_model):
     return django_user_model.objects.create(
@@ -36,18 +41,6 @@ def author(django_user_model):
         password='test_password22',
     )
 
-# @pytest.fixture
-# def user_admin(django_user_model):
-#     return django_user_model.objects.create_superuser(
-#         username='test_admin',
-#         password='test_password22',
-#     )
-
-# @pytest.fixture
-# def admin_client(user_admin):
-#     client = Client()
-#     client.login(username=user_admin.username, password=user_admin.password)
-#     return client
 
 @pytest.fixture
 def create_course(author):
@@ -58,11 +51,36 @@ def create_course(author):
         'cost': 10000,
         'min_group_people': 2,
         'max_group_people': 5,
-
     }
     return Course.objects.create(**course_data)
-    #return Course.objects.get(name=course_data['name'])
+
 
 @pytest.fixture
 def user_with_pa(user, create_course):
     return PassAccess.objects.create(student=user, course=create_course, is_valid=True)
+
+
+@pytest.fixture
+def create_lessons(create_course):
+
+    lesson_data = {
+        'course': create_course,
+        'name': 'TestCourse',
+        'link_to_video': 'https://www.youtube.com/watch?v=9WPnnn1m4SM',
+    }
+    return Lesson.objects.create(**lesson_data)
+
+
+@pytest.fixture(autouse=True)
+def clear_cache():
+    yield
+    cache.clear()
+
+
+@pytest.fixture(autouse=True)
+def no_logging():
+    """Отключает логирование для тестов."""
+    original_level = logging.getLogger().level
+    logging.getLogger().setLevel(logging.CRITICAL)
+    yield
+    logging.getLogger().setLevel(original_level)

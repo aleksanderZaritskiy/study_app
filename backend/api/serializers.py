@@ -28,21 +28,24 @@ class CourseSerializer(serializers.ModelSerializer):
 
     def get_author_name(self, obj):
         return obj.author.username
-    
+
     def get_lessons_count(self, obj):
         return obj.lessons_count
 
     def get_students_count(self, obj):
         return obj.students_count
-    
+
     def get_avg_groups(self, obj):
         all_groups = Group.objects.filter(course=obj).count()
         if all_groups and obj.students_count:
             return round(
-                (all_groups * obj.students_count / all_groups) / obj.max_group_people * 100, 2
+                (all_groups * obj.students_count / all_groups)
+                / obj.max_group_people
+                * 100,
+                2,
             )
         return 0
-    
+
     def get_course_purchase(self, obj):
         all_user = User.objects.all().count()
         if obj.students_count:
@@ -58,4 +61,3 @@ class LessonSerializer(serializers.ModelSerializer):
             'name',
             'link_to_video',
         )
-

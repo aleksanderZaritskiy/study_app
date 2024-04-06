@@ -2,7 +2,12 @@ from django.db import models
 from django.contrib.auth import get_user_model
 
 from .constants import LENGTH_NAME_OBJ
-from .validators import validate_name, validate_number, validate_date_time_start, validate_url
+from .validators import (
+    validate_name,
+    validate_number,
+    validate_date_time_start,
+    validate_url,
+)
 
 
 User = get_user_model()
@@ -62,7 +67,9 @@ class Course(models.Model):
 class PassAccess(models.Model):
     """Модель связи студента и курса"""
 
-    student = models.ForeignKey(User, on_delete=models.CASCADE, related_name='pass_access')
+    student = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name='pass_access'
+    )
     course = models.ForeignKey(
         Course, on_delete=models.CASCADE, related_name='pass_access'
     )
@@ -84,9 +91,7 @@ class PassAccess(models.Model):
 class Lesson(models.Model):
     """Модель урока"""
 
-    course = models.ForeignKey(
-        Course, on_delete=models.CASCADE, related_name='lesson'
-    )
+    course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name='lesson')
     name = models.CharField(
         'Название урока',
         help_text='Укажите название урока',
@@ -104,10 +109,10 @@ class Lesson(models.Model):
 
     class Meta:
         verbose_name_plural = 'Lessons'
-        
+
     def __str__(self):
         return f'Курс: {self.course}, Урок: {self.name}'
-    
+
 
 class Group(models.Model):
     """Модель группы"""
@@ -116,9 +121,7 @@ class Group(models.Model):
         User,
         through='GroupStudents',
     )
-    course = models.ForeignKey(
-        Course, on_delete=models.CASCADE, related_name='group'
-    )
+    course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name='group')
     name = models.CharField(
         'Название группы',
         help_text='Укажите название группы',
@@ -140,8 +143,8 @@ class GroupStudentsManager(models.Manager):
 
     def del_groups_related_course(self, course):
         GroupStudents.objects.filter(group__course=course).delete()
-    
-        
+
+
 class GroupStudents(models.Model):
     group = models.ForeignKey(Group, on_delete=models.CASCADE)
     student = models.ForeignKey(User, on_delete=models.CASCADE)
@@ -154,5 +157,3 @@ class GroupStudents(models.Model):
                 name='unique_student_group',
             )
         ]
-    
-

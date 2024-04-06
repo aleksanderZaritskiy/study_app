@@ -13,12 +13,18 @@ logger = logging.getLogger(__name__)
 
 
 def get_groups(course):
-    groups = Group.objects.filter(course=course).annotate(students_count=Count('student')).select_related('course').prefetch_related('student')
+    groups = (
+        Group.objects.filter(course=course)
+        .annotate(students_count=Count('student'))
+        .select_related('course')
+        .prefetch_related('student')
+    )
     return list(groups)
+
 
 @receiver(post_save, sender=PassAccess)
 def create_group(sender, instance, created, **kwargs):
-    """ 
+    """
     При получении доступа к курсу, студент должен быть распределен в группу.
     Если курс ещё не начался. При каждом новом допуске группы должны быть ребалансированы n +-1.
     Ребалансировка групп и побочный функционал реализованы в интерфейсе GroupRebalance в services.groups_rebalance
@@ -27,7 +33,7 @@ def create_group(sender, instance, created, **kwargs):
     logger.info('Запуск сигнала')
 
     student = instance.student
-    course = instance.course 
+    course = instance.course
 
     group_rebalance = GroupRebalance(student, course, get_groups(course))
 
@@ -41,7 +47,7 @@ def create_group(sender, instance, created, **kwargs):
         else:
             logger.info('У пользователя не подтвержден PA')
     else:
-        
+
         if not instance.is_valid:
             logger.info('У пользователя отобрали PA')
             group = Group.objects.filter(course=course, student=student).first()
@@ -50,10 +56,10 @@ def create_group(sender, instance, created, **kwargs):
             group_rebalance.groups = get_groups(course)
             group_rebalance.rebalance()
             logger.info('Группы ребалансированы')
-            
-            cache.delete(f'{student}_course_{course.id}')
+
+            cache.delete(f'{student}_lessons_course_{course.id}')
             logger.info(f'Кеш {student} очищен')
-        
+
 
 @receiver(post_delete, sender=Lesson)
 @receiver(post_save, sender=Lesson)
