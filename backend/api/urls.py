@@ -1,19 +1,20 @@
-from django.urls import path, include, re_path
+from django.urls import path, include
 from rest_framework.routers import DefaultRouter
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from djoser import views
 
-from .views import CourseViewSet
-
+from .views import CourseViewSet, CreateUserViewSet, LogoutView
 
 router = DefaultRouter()
 
-router.register('users', views.UserViewSet)
 router.register('course', CourseViewSet, basename='course')
-# router.register('lesson', LessonViewSet)
-# router.register('get_pass', PassVeiewSet)
-# router.register('group', GroupViewSet)
+
 
 urlpatterns = [
     path('', include(router.urls)),
-    re_path(r'^auth/', include('djoser.urls.authtoken')),
+    path('register/', CreateUserViewSet.as_view({'post': 'create'}), name='user-create'),
+    path('me/', views.UserViewSet.as_view({'get': 'me', 'patch': 'me'}), name='user-me'),
+    path('login/', TokenObtainPairView.as_view(), name='login'),
+    path('logout/', LogoutView.as_view(), name='logout'),
+    path('refresh/', TokenRefreshView.as_view(), name='refresh'),
 ]

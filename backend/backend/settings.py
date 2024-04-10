@@ -1,5 +1,8 @@
+from datetime import timedelta
 from pathlib import Path
 import os
+
+from study.constants import TTL_ACCESS_TOKEN, TTL_REFRESH_TOKEN, TTL_CONSTANCE
 
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -21,10 +24,12 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "rest_framework",
+    'constance',
     "djoser",
-    "rest_framework.authtoken",
+    'rest_framework_simplejwt.token_blacklist',
     "study.apps.StudyConfig",
     "api.apps.ApiConfig",
+    "user.apps.UserConfig",
 ]
 
 MIDDLEWARE = [
@@ -127,7 +132,8 @@ REST_FRAMEWORK = {
         'rest_framework.permissions.AllowAny',
     ],
     'DEFAULT_AUTHENTICATION_CLASSES': [
-        'rest_framework.authentication.TokenAuthentication',
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+        'rest_framework.authentication.SessionAuthentication',
     ],
 }
 
@@ -159,4 +165,43 @@ CACHES = {
         "BACKEND": "django.core.cache.backends.redis.RedisCache",
         "LOCATION": "redis://127.0.0.1:6379/1",
     }
+}
+
+AUTH_USER_MODEL = 'user.User'
+
+DJOSER = {
+    'SERIALIZERS': {
+        'current_user': 'api.serializers.CurrentUserSerializer',
+        'user_create': 'api.serializers.CreateUserSerializer',
+    },
+    'PERMISSIONS': {
+        'user': ['rest_framework.permissions.IsAuthenticated'],
+    },
+}
+
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(seconds=TTL_ACCESS_TOKEN),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=TTL_REFRESH_TOKEN),
+    'AUTH_HEADER_TYPES': ('Bearer',),
+    'USER_ID_FIELD': 'id',
+    'USER_ID_CLAIM': 'user_id',
+    'AUTH_TOKEN_CLASSES': ('rest_framework_simplejwt.tokens.AccessToken',),
+    'TOKEN_TYPE_CLAIM': 'token_type',
+    'ROTATE_REFRESH_TOKENS': True,
+    'BLACKLIST_AFTER_ROTATION': False,
+    'ALGORITHM': 'HS256',
+    'SIGNING_KEY': SECRET_KEY,
+    'VERIFYING_KEY': None,
+}
+
+CONSTANCE_BACKEND = 'constance.backends.redisd.RedisBackend'
+CONSTANCE_REDIS_CONNECTION = {
+    'host': 'localhost',
+    'port': 6379,
+    'db': 1,
+}
+CONSTANCE_REDIS_CACHE_TIMEOUT = TTL_CONSTANCE
+CONSTANCE_CONFIG = {
+    'TTL_CACHE_PA': (86_400, 'Time to life PA cache'),
+    'TTL_CACHE_LESSONS': (86_400, 'Time to life lessons cache'),
 }

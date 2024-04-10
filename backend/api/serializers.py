@@ -1,7 +1,29 @@
 from rest_framework import serializers
-from djoser.serializers import UserSerializer
+from djoser.serializers import UserCreateSerializer
 
 from study.models import Course, Lesson, Group, User
+
+
+class CurrentUserSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = User
+        fields = (
+            'id',
+            'username',
+            'email',
+        )
+
+
+class CreateUserSerializer(UserCreateSerializer):
+
+    class Meta:
+        model = User
+        fields = (
+            'id',
+            'email',
+            'password',
+        )
 
 
 class CourseSerializer(serializers.ModelSerializer):
